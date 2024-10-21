@@ -33,7 +33,7 @@ def generate_launch_description():
         use_sim_time = False
 
     # Path for the RViz config file
-    rviz_config_file = os.path.join(get_package_share_directory('localization_server'), 'config', 'localizer_config.rviz')
+    rviz_config_file = os.path.join(get_package_share_directory('localization_server'), 'config', 'paths.rviz')
 
     # Path for the map file
     map_file_path = [os.path.join(get_package_share_directory('map_server'), 'config'), '/', map_file_name]
@@ -96,7 +96,7 @@ def generate_launch_description():
             executable='lifecycle_manager',
             name='lifecycle_manager_localization',
             output='screen',
-            parameters=[{'use_sim_time': True},
+            parameters=[{'use_sim_time': False},
                         {'autostart': True},
                         {'node_names': ['map_server', 'amcl']}]
         ),
@@ -108,7 +108,7 @@ def generate_launch_description():
             name='map_to_odom_static_broadcaster',
             output='screen',
             arguments=['0', '0', '0', '0', '0', '0', 'map', odom_frame],
-            parameters=[{'use_sim_time': True}]
+            parameters=[{'use_sim_time': False}]
         ),
     ])
 
