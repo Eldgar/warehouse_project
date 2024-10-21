@@ -5,10 +5,10 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     # Paths to config files
-    controller_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'controller.yaml')
-    bt_navigator_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'bt_navigator.yaml')
-    planner_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'planner_server.yaml')
-    recovery_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'recovery.yaml')
+    controller_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'controller_sim.yaml')
+    bt_navigator_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'bt_navigator_sim.yaml')
+    planner_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'planner_server_sim.yaml')
+    recovery_yaml = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'recovery_sim.yaml')
     rviz_config = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'pathplanning_rviz_config.rviz')
 
     return LaunchDescription([
@@ -19,7 +19,7 @@ def generate_launch_description():
             name='controller_server',
             output='screen',
             parameters=[controller_yaml],
-            remappings=[('/cmd_vel', '/cmd_vel')]
+            remappings=[('/cmd_vel', '/diffbot_base_controller/cmd_vel_unstamped')]
         ),
         
         # Launch planner server
@@ -54,7 +54,7 @@ def generate_launch_description():
             executable='lifecycle_manager',
             name='lifecycle_manager_pathplanner',
             output='screen',
-            parameters=[{'use_sim_time': False},
+            parameters=[{'use_sim_time': True},
                         {'autostart': True},
                         {'node_names': ['planner_server',
                                         'controller_server',
