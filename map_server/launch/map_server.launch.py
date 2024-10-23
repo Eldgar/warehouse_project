@@ -1,71 +1,45 @@
 import os
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    # Declare the 'map_file' argument, with a default value
+    # Declare the 'map_file' argument
     declare_map_file_cmd = DeclareLaunchArgument(
         'map_file',
-        default_value='warehouse_map_sim.yaml',
-        description='Name of the map file to load')
+        default_value='warehouse_map_real.yaml',
+        description='Name of the map file to load (determines which launch file to use)'
+    )
 
-    # Path to the RViz configuration file
-    rviz_config_file = os.path.join(
-        get_package_share_directory('map_server'), 'config', 'mapper_rviz_config.rviz')
+    # Define launch configurations
+    map_file = LaunchConfiguration('map_file')
 
-    # Get the map file from the launch argument
-    map_file_name = LaunchConfiguration('map_file')
+    # Paths to the launch files
+    pkg_share = get_package_share_directory('map_server')
+    map_server_sim_launch = os.path.join(pkg_share, 'launch', 'map_server_sim.launch.py')
+    map_server_real_launch = os.path.join(pkg_share, 'launch', 'map_server_real.launch.py')
 
-    # Use LaunchConfiguration substitutions directly in the node parameters
-    map_file_path = [os.path.join(get_package_share_directory('map_server'), 'config'), '/', map_file_name]
+    # Function to select the appropriate launch file based on 'map_file'
+    def include_map_server_launch(context):
+        # Get the actual value of 'map_file' at runtime
+        map_file_value = map_file.perform(context)
+
+        # Decide which launch file to include
+        if map_file_value == 'warehouse_map_real.yaml':
+            return [IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(map_server_real_launch)
+            )]
+        else:
+            return [IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(map_server_sim_launch)
+            )]
+
+    # Use OpaqueFunction to perform the conditional logic at launch time
+    conditional_inclusion = OpaqueFunction(function=include_map_server_launch)
 
     return LaunchDescription([
-        # Declare the map file argument
         declare_map_file_cmd,
-
-        # Start the map_server node to publish the map
-        Node(
-            package='nav2_map_server',
-            executable='map_server',
-            name='map_server',
-            output='screen',
-            parameters=[{'use_sim_time': True},
-                        {'yaml_filename': map_file_path}]
-        ),
-
-        # Start RViz2 to visualize the map
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            output='screen',
-            parameters=[{'use_sim_time': True}],
-            arguments=['-d', rviz_config_file]
-        ),
-
-        # Start the lifecycle manager to manage the state transitions of the nodes
-        Node(
-            package='nav2_lifecycle_manager',
-            executable='lifecycle_manager',
-            name='lifecycle_manager_mapper',
-            output='screen',
-            parameters=[{'use_sim_time': True},
-                        {'autostart': True},
-                        {'node_names': ['map_server']}]
-        ),
-
-        # Add a static transform publisher to link 'map' and 'odom'
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='map_to_odom_static_broadcaster',
-            output='screen',
-            arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-            parameters=[{'use_sim_time': True}]
-        ),
+        conditional_inclusion,
     ])
-
-

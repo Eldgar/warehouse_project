@@ -15,13 +15,13 @@ def generate_launch_description():
 
     # Get the map file from the launch argument
     map_file_name = LaunchConfiguration('map_file')
-    amcl_config = ''
-    use_sim_time = False
+    amcl_config = os.path.join(get_package_share_directory('localization_server'), 'config', 'amcl_config_sim.yaml')
+    use_sim_time = True
     
 
     # Paths for the AMCL config files
-    amcl_config_real = os.path.join(get_package_share_directory('localization_server'), 'config', 'amcl_config_real.yaml')
-    amcl_config_sim = os.path.join(get_package_share_directory('localization_server'), 'config', 'amcl_config_sim.yaml')
+    #amcl_config_real = os.path.join(get_package_share_directory('localization_server'), 'config', 'amcl_config_real.yaml')
+    #amcl_config_sim = os.path.join(get_package_share_directory('localization_server'), 'config', 'amcl_config_sim.yaml')
 
     
 
@@ -31,38 +31,16 @@ def generate_launch_description():
     # Path for the map file
     map_file_path = [os.path.join(get_package_share_directory('map_server'), 'config'), '/', map_file_name]
 
-   
-    if map_file_name == 'warehouse_map_real.yaml':
-        amcl_config = amcl_config_real
-        odom_frame = 'robot_odom'
-        use_sim_time = False
-    else:
-        amcl_config = amcl_config_sim
-        odom_frame = 'odom'
-        use_sim_time = True
-
 
      # Dynamically assign AMCL config and odom frame based on map file
     amcl_config_launch = LaunchConfiguration('amcl_config', default=amcl_config)
     odom_frame = LaunchConfiguration('odom_frame', default='odom')
 
 
-    # Print statements for debugging, using LogInfo to print runtime substitution values
-    log_info_map = LogInfo(msg=['Using map file: ', map_file_name])
-    log_info_amcl = LogInfo(msg=['Using AMCL config file: ', amcl_config_launch])
-    log_info_odom = LogInfo(msg=['Using odom frame: ', odom_frame])
-    log_info_time = LogInfo(msg=['Sim Time: ', str(use_sim_time)])
-
 
     return LaunchDescription([
         # Declare the map_file argument
         declare_map_file_cmd,
-
-        # Log info statements for debugging
-        log_info_map,
-        log_info_amcl,
-        log_info_odom,
-        log_info_time,
 
         # Start the map server
         Node(
