@@ -26,7 +26,7 @@ def generate_launch_description():
     
 
     # Path for the RViz config file
-    rviz_config_file = os.path.join(get_package_share_directory('localization_server'), 'config', 'paths.rviz')
+    rviz_config_file = os.path.join(get_package_share_directory('localization_server'), 'config', 'paths3.rviz')
 
     # Path for the map file
     map_file_path = [os.path.join(get_package_share_directory('map_server'), 'config'), '/', map_file_name]
