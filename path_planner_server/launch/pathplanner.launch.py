@@ -2,6 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import TimerAction
 
 def generate_launch_description():
     # Paths to config files
@@ -12,17 +13,7 @@ def generate_launch_description():
     rviz_config = os.path.join(get_package_share_directory('path_planner_server'), 'config', 'pathplanning_rviz_config.rviz')
 
     return LaunchDescription([
-        # Launch controller server
-        Node(
-            package='nav2_controller',
-            executable='controller_server',
-            name='controller_server',
-            output='screen',
-            parameters=[controller_yaml],
-            remappings=[('/cmd_vel', '/cmd_vel')]
-        ),
-        
-        # Launch planner server
+        # Launch planner server immediately
         Node(
             package='nav2_planner',
             executable='planner_server',
@@ -31,24 +22,49 @@ def generate_launch_description():
             parameters=[planner_yaml]
         ),
 
-        Node(
-            package='nav2_behaviors',
-            executable='behavior_server',
-            name='behavior_server',
-            parameters=[recovery_yaml],
-            output='screen'),
-
-
-        # Launch behavior tree navigator
-        Node(
-            package='nav2_bt_navigator',
-            executable='bt_navigator',
-            name='bt_navigator',
-            output='screen',
-            parameters=[bt_navigator_yaml]
+        # Delay launching controller server by 5 seconds
+        TimerAction(
+            period=5.0,
+            actions=[
+                Node(
+                    package='nav2_controller',
+                    executable='controller_server',
+                    name='controller_server',
+                    output='screen',
+                    parameters=[controller_yaml],
+                )
+            ]
         ),
-        
-        # Launch lifecycle manager for path planner
+
+        # Delay launching behavior server by 5 seconds
+        TimerAction(
+            period=5.0,
+            actions=[
+                Node(
+                    package='nav2_behaviors',
+                    executable='behavior_server',
+                    name='behavior_server',
+                    parameters=[recovery_yaml],
+                    output='screen'
+                )
+            ]
+        ),
+
+        # Delay launching bt_navigator by 5 seconds
+        TimerAction(
+            period=5.0,
+            actions=[
+                Node(
+                    package='nav2_bt_navigator',
+                    executable='bt_navigator',
+                    name='bt_navigator',
+                    output='screen',
+                    parameters=[bt_navigator_yaml]
+                )
+            ]
+        ),
+
+        # Launch lifecycle manager immediately
         Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
